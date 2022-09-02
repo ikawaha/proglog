@@ -1,0 +1,61 @@
+// Code generated with goa v3.8.4, DO NOT EDIT.
+//
+// ProgLog protocol buffer definition
+//
+// Command:
+// $ goa gen github.com/ikawaha/proglog/design
+
+syntax = "proto3";
+
+package prog_log;
+
+option go_package = "/prog_logpb";
+
+// Service is the ProgLog service interface.
+service ProgLog {
+	// Procedure implements Procedure.
+	rpc Procedure (ProcedureRequest) returns (ProcedureResponse);
+	// Consume implements Consume.
+	rpc Consume (ConsumeRequest) returns (ConsumeResponse);
+	// ProcedureStream implements ProcedureStream.
+	rpc ProcedureStream (stream ProcedureStreamStreamingRequest) returns (ProcedureStreamResponse);
+	// ConsumeStream implements ConsumeStream.
+	rpc ConsumeStream (stream ConsumeStreamStreamingRequest) returns (stream ConsumeStreamResponse);
+}
+
+message ProcedureRequest {
+	Record record = 1;
+}
+
+message Record {
+	bytes value = 1;
+	uint64 offset = 2;
+}
+
+message ProcedureResponse {
+	uint64 offset = 1;
+}
+
+message ConsumeRequest {
+	uint64 offset = 1;
+}
+
+message ConsumeResponse {
+	Record record = 1;
+}
+
+message ProcedureStreamStreamingRequest {
+	Record record = 1;
+}
+
+message ProcedureStreamResponse {
+	uint64 offset = 1;
+}
+
+message ConsumeStreamStreamingRequest {
+	uint64 offset = 1;
+}
+
+message ConsumeStreamResponse {
+	Record record = 1;
+}
