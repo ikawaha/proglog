@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	pb "github.com/ikawaha/proglog/gen/grpc/logger/pb"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	pb "proglog/gen/grpc/prog_log/pb"
 )
 
 func TestLog(t *testing.T) {

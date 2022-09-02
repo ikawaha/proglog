@@ -3,15 +3,15 @@
 // ProgLog gRPC server
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package server
 
 import (
 	"context"
+	prog_logpb "proglog/gen/grpc/prog_log/pb"
+	proglog "proglog/gen/prog_log"
 
-	prog_logpb "github.com/ikawaha/proglog/gen/grpc/prog_log/pb"
-	proglog "github.com/ikawaha/proglog/gen/prog_log"
 	goagrpc "goa.design/goa/v3/grpc"
 	goa "goa.design/goa/v3/pkg"
 )

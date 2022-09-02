@@ -3,7 +3,7 @@
 // ProgLog protocol buffer definition
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 syntax = "proto3";
 

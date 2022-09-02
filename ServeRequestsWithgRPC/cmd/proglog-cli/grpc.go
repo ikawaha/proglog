@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	cli "proglog/gen/grpc/cli/proglog"
 
-	cli "github.com/ikawaha/proglog/gen/grpc/cli/proglog"
 	goa "goa.design/goa/v3/pkg"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

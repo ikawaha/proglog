@@ -3,7 +3,7 @@
 // proglog gRPC client CLI support package
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package cli
 
@@ -11,8 +11,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	proglogc "proglog/gen/grpc/prog_log/client"
 
-	proglogc "github.com/ikawaha/proglog/gen/grpc/prog_log/client"
 	goa "goa.design/goa/v3/pkg"
 	grpc "google.golang.org/grpc"
 )

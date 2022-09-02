@@ -3,7 +3,7 @@
 // ProgLog endpoints
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package proglog
 

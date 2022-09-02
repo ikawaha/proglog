@@ -1,4 +1,4 @@
-module github.com/ikawaha/proglog
+module proglog
 
 go 1.19
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	proglog "github.com/ikawaha/proglog/gen/prog_log"
+	proglog "proglog/gen/prog_log"
 )
 
 // ProgLog service example implementation.

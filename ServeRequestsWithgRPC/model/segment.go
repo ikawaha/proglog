@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	pb "github.com/ikawaha/proglog/gen/grpc/logger/pb"
 	"google.golang.org/protobuf/proto"
+	pb "proglog/gen/grpc/prog_log/pb"
 )
 
 type segment struct {

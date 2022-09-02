@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	pb "github.com/ikawaha/proglog/gen/grpc/logger/pb"
+	pb "proglog/gen/grpc/prog_log/pb"
 )
 
 type Log struct {

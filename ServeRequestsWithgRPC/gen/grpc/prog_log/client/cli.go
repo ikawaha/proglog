@@ -3,16 +3,15 @@
 // ProgLog gRPC client CLI support package
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package client
 
 import (
 	"encoding/json"
 	"fmt"
-
-	prog_logpb "github.com/ikawaha/proglog/gen/grpc/prog_log/pb"
-	proglog "github.com/ikawaha/proglog/gen/prog_log"
+	prog_logpb "proglog/gen/grpc/prog_log/pb"
+	proglog "proglog/gen/prog_log"
 )
 
 // BuildProcedurePayload builds the payload for the ProgLog Procedure endpoint

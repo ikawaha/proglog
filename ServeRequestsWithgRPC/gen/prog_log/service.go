@@ -3,14 +3,13 @@
 // ProgLog service
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package proglog
 
 import (
 	"context"
-
-	proglogviews "github.com/ikawaha/proglog/gen/prog_log/views"
+	proglogviews "proglog/gen/prog_log/views"
 )
 
 // Service is the ProgLog service interface.

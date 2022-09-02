@@ -3,16 +3,16 @@
 // ProgLog gRPC server encoders and decoders
 //
 // Command:
-// $ goa gen github.com/ikawaha/proglog/design
+// $ goa gen proglog/design
 
 package server
 
 import (
 	"context"
+	prog_logpb "proglog/gen/grpc/prog_log/pb"
+	proglog "proglog/gen/prog_log"
+	proglogviews "proglog/gen/prog_log/views"
 
-	prog_logpb "github.com/ikawaha/proglog/gen/grpc/prog_log/pb"
-	proglog "github.com/ikawaha/proglog/gen/prog_log"
-	proglogviews "github.com/ikawaha/proglog/gen/prog_log/views"
 	goagrpc "goa.design/goa/v3/grpc"
 	"google.golang.org/grpc/metadata"
 )

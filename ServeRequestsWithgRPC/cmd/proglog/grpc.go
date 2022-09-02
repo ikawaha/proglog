@@ -7,10 +7,11 @@ import (
 	"net/url"
 	"sync"
 
+	prog_logpb "proglog/gen/grpc/prog_log/pb"
+	proglogsvr "proglog/gen/grpc/prog_log/server"
+	proglog "proglog/gen/prog_log"
+
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	loggerpb "github.com/ikawaha/proglog/gen/grpc/logger/pb"
-	loggersvr "github.com/ikawaha/proglog/gen/grpc/logger/server"
-	logger "github.com/ikawaha/proglog/gen/logger"
 	grpcmdlwr "goa.design/goa/v3/grpc/middleware"
 	"goa.design/goa/v3/middleware"
 	"google.golang.org/grpc"
@@ -19,7 +20,7 @@ import (
 
 // handleGRPCServer starts configures and starts a gRPC server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleGRPCServer(ctx context.Context, u *url.URL, loggerEndpoints *logger.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
+func handleGRPCServer(ctx context.Context, u *url.URL, progLogEndpoints *proglog.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
 
 	// Setup goa log adapter.
 	var (
@@ -34,10 +35,10 @@ func handleGRPCServer(ctx context.Context, u *url.URL, loggerEndpoints *logger.E
 	// the service input and output data structures to gRPC requests and
 	// responses.
 	var (
-		loggerServer *loggersvr.Server
+		progLogServer *proglogsvr.Server
 	)
 	{
-		loggerServer = loggersvr.New(loggerEndpoints, nil, nil)
+		progLogServer = proglogsvr.New(progLogEndpoints, nil, nil)
 	}
 
 	// Initialize gRPC server with the middleware.
@@ -53,7 +54,7 @@ func handleGRPCServer(ctx context.Context, u *url.URL, loggerEndpoints *logger.E
 	)
 
 	// Register the servers.
-	loggerpb.RegisterLoggerServer(srv, loggerServer)
+	prog_logpb.RegisterProgLogServer(srv, progLogServer)
 
 	for svc, info := range srv.GetServiceInfo() {
 		for _, m := range info.Methods {

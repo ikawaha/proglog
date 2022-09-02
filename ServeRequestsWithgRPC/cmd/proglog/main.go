@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	proglogapi "proglog"
+	proglog "proglog/gen/prog_log"
 	"sync"
 	"syscall"
-
-	proglog "github.com/ikawaha/proglog"
 )
 
 func main() {
@@ -32,24 +32,24 @@ func main() {
 		logger *log.Logger
 	)
 	{
-		logger = log.New(os.Stderr, "[proglog] ", log.Ltime)
+		logger = log.New(os.Stderr, "[proglogapi] ", log.Ltime)
 	}
 
 	// Initialize the services.
 	var (
-		loggerSvc logger.Service
+		progLogSvc proglog.Service
 	)
 	{
-		loggerSvc = proglog.NewLogger(logger)
+		progLogSvc = proglogapi.NewProgLog(logger)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
 	// potentially running in different processes.
 	var (
-		loggerEndpoints *logger.Endpoints
+		progLogEndpoints *proglog.Endpoints
 	)
 	{
-		loggerEndpoints = logger.NewEndpoints(loggerSvc)
+		progLogEndpoints = proglog.NewEndpoints(progLogSvc)
 	}
 
 	// Create channel used by both the signal handler and server goroutines
@@ -91,7 +91,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host = net.JoinHostPort(u.Host, "8080")
 			}
-			handleGRPCServer(ctx, u, loggerEndpoints, &wg, errc, logger, *dbgF)
+			handleGRPCServer(ctx, u, progLogEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 	default:
