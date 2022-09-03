@@ -9,10 +9,12 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	proglogapi "proglog"
-	proglog "proglog/gen/prog_log"
 	"sync"
 	"syscall"
+
+	proglogapi "proglog"
+	proglog "proglog/gen/prog_log"
+	"proglog/model"
 )
 
 func main() {
@@ -36,12 +38,13 @@ func main() {
 	}
 
 	// Initialize the services.
-	var (
-		progLogSvc proglog.Service
-	)
-	{
-		progLogSvc = proglogapi.NewProgLog(logger)
+	cl, err := model.NewLog("./log", model.Config{})
+	if err != nil {
+		log.Fatalf("initialize error, %v", err)
 	}
+	progLogSvc := proglogapi.NewProgLog(logger, &proglogapi.Config{
+		CommitLog: cl,
+	})
 
 	// Wrap the services in endpoints that can be invoked from other services
 	// potentially running in different processes.

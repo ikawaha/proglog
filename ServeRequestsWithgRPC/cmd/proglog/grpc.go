@@ -5,11 +5,10 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"sync"
-
 	prog_logpb "proglog/gen/grpc/prog_log/pb"
 	proglogsvr "proglog/gen/grpc/prog_log/server"
 	proglog "proglog/gen/prog_log"
+	"sync"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcmdlwr "goa.design/goa/v3/grpc/middleware"
