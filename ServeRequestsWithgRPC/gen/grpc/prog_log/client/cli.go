@@ -14,14 +14,14 @@ import (
 	proglog "proglog/gen/prog_log"
 )
 
-// BuildProcedurePayload builds the payload for the ProgLog Procedure endpoint
-// from CLI flags.
-func BuildProcedurePayload(progLogProcedureMessage string) (*proglog.ProduceRequest, error) {
+// BuildProducePayload builds the payload for the ProgLog Produce endpoint from
+// CLI flags.
+func BuildProducePayload(progLogProduceMessage string) (*proglog.ProduceRequest, error) {
 	var err error
-	var message prog_logpb.ProcedureRequest
+	var message prog_logpb.ProduceRequest
 	{
-		if progLogProcedureMessage != "" {
-			err = json.Unmarshal([]byte(progLogProcedureMessage), &message)
+		if progLogProduceMessage != "" {
+			err = json.Unmarshal([]byte(progLogProduceMessage), &message)
 			if err != nil {
 				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"record\": {\n         \"offset\": 10189682183573662085,\n         \"value\": \"Vm9sdXB0YXRlIHF1YWVyYXQgcXVpIGRvbG9yIGxhdWRhbnRpdW0gbWFpb3Jlcy4=\"\n      }\n   }'")
 			}
@@ -45,6 +45,26 @@ func BuildConsumePayload(progLogConsumeMessage string) (*proglog.ConsumeRequest,
 			err = json.Unmarshal([]byte(progLogConsumeMessage), &message)
 			if err != nil {
 				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"offset\": 8097310025797036250\n   }'")
+			}
+		}
+	}
+	v := &proglog.ConsumeRequest{
+		Offset: message.Offset,
+	}
+
+	return v, nil
+}
+
+// BuildConsumeStreamPayload builds the payload for the ProgLog ConsumeStream
+// endpoint from CLI flags.
+func BuildConsumeStreamPayload(progLogConsumeStreamMessage string) (*proglog.ConsumeRequest, error) {
+	var err error
+	var message prog_logpb.ConsumeStreamRequest
+	{
+		if progLogConsumeStreamMessage != "" {
+			err = json.Unmarshal([]byte(progLogConsumeStreamMessage), &message)
+			if err != nil {
+				return nil, fmt.Errorf("invalid JSON for message, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"offset\": 17539627402234799792\n   }'")
 			}
 		}
 	}

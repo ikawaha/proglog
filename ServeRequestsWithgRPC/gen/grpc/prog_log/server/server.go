@@ -9,19 +9,21 @@ package server
 
 import (
 	"context"
+	"errors"
 	prog_logpb "proglog/gen/grpc/prog_log/pb"
 	proglog "proglog/gen/prog_log"
 
 	goagrpc "goa.design/goa/v3/grpc"
 	goa "goa.design/goa/v3/pkg"
+	"google.golang.org/grpc/codes"
 )
 
 // Server implements the prog_logpb.ProgLogServer interface.
 type Server struct {
-	ProcedureH       goagrpc.UnaryHandler
-	ConsumeH         goagrpc.UnaryHandler
-	ProcedureStreamH goagrpc.StreamHandler
-	ConsumeStreamH   goagrpc.StreamHandler
+	ProduceH       goagrpc.UnaryHandler
+	ConsumeH       goagrpc.UnaryHandler
+	ProduceStreamH goagrpc.StreamHandler
+	ConsumeStreamH goagrpc.StreamHandler
 	prog_logpb.UnimplementedProgLogServer
 }
 
@@ -31,10 +33,10 @@ type ErrorNamer interface {
 	ErrorName() string
 }
 
-// ProcedureStreamServerStream implements the
-// proglog.ProcedureStreamServerStream interface.
-type ProcedureStreamServerStream struct {
-	stream prog_logpb.ProgLog_ProcedureStreamServer
+// ProduceStreamServerStream implements the proglog.ProduceStreamServerStream
+// interface.
+type ProduceStreamServerStream struct {
+	stream prog_logpb.ProgLog_ProduceStreamServer
 	view   string
 }
 
@@ -48,32 +50,32 @@ type ConsumeStreamServerStream struct {
 // New instantiates the server struct with the ProgLog service endpoints.
 func New(e *proglog.Endpoints, uh goagrpc.UnaryHandler, sh goagrpc.StreamHandler) *Server {
 	return &Server{
-		ProcedureH:       NewProcedureHandler(e.Procedure, uh),
-		ConsumeH:         NewConsumeHandler(e.Consume, uh),
-		ProcedureStreamH: NewProcedureStreamHandler(e.ProcedureStream, sh),
-		ConsumeStreamH:   NewConsumeStreamHandler(e.ConsumeStream, sh),
+		ProduceH:       NewProduceHandler(e.Produce, uh),
+		ConsumeH:       NewConsumeHandler(e.Consume, uh),
+		ProduceStreamH: NewProduceStreamHandler(e.ProduceStream, sh),
+		ConsumeStreamH: NewConsumeStreamHandler(e.ConsumeStream, sh),
 	}
 }
 
-// NewProcedureHandler creates a gRPC handler which serves the "ProgLog"
-// service "Procedure" endpoint.
-func NewProcedureHandler(endpoint goa.Endpoint, h goagrpc.UnaryHandler) goagrpc.UnaryHandler {
+// NewProduceHandler creates a gRPC handler which serves the "ProgLog" service
+// "Produce" endpoint.
+func NewProduceHandler(endpoint goa.Endpoint, h goagrpc.UnaryHandler) goagrpc.UnaryHandler {
 	if h == nil {
-		h = goagrpc.NewUnaryHandler(endpoint, DecodeProcedureRequest, EncodeProcedureResponse)
+		h = goagrpc.NewUnaryHandler(endpoint, DecodeProduceRequest, EncodeProduceResponse)
 	}
 	return h
 }
 
-// Procedure implements the "Procedure" method in prog_logpb.ProgLogServer
+// Produce implements the "Produce" method in prog_logpb.ProgLogServer
 // interface.
-func (s *Server) Procedure(ctx context.Context, message *prog_logpb.ProcedureRequest) (*prog_logpb.ProcedureResponse, error) {
-	ctx = context.WithValue(ctx, goa.MethodKey, "Procedure")
+func (s *Server) Produce(ctx context.Context, message *prog_logpb.ProduceRequest) (*prog_logpb.ProduceResponse, error) {
+	ctx = context.WithValue(ctx, goa.MethodKey, "Produce")
 	ctx = context.WithValue(ctx, goa.ServiceKey, "ProgLog")
-	resp, err := s.ProcedureH.Handle(ctx, message)
+	resp, err := s.ProduceH.Handle(ctx, message)
 	if err != nil {
 		return nil, goagrpc.EncodeError(err)
 	}
-	return resp.(*prog_logpb.ProcedureResponse), nil
+	return resp.(*prog_logpb.ProduceResponse), nil
 }
 
 // NewConsumeHandler creates a gRPC handler which serves the "ProgLog" service
@@ -97,29 +99,29 @@ func (s *Server) Consume(ctx context.Context, message *prog_logpb.ConsumeRequest
 	return resp.(*prog_logpb.ConsumeResponse), nil
 }
 
-// NewProcedureStreamHandler creates a gRPC handler which serves the "ProgLog"
-// service "ProcedureStream" endpoint.
-func NewProcedureStreamHandler(endpoint goa.Endpoint, h goagrpc.StreamHandler) goagrpc.StreamHandler {
+// NewProduceStreamHandler creates a gRPC handler which serves the "ProgLog"
+// service "ProduceStream" endpoint.
+func NewProduceStreamHandler(endpoint goa.Endpoint, h goagrpc.StreamHandler) goagrpc.StreamHandler {
 	if h == nil {
 		h = goagrpc.NewStreamHandler(endpoint, nil)
 	}
 	return h
 }
 
-// ProcedureStream implements the "ProcedureStream" method in
+// ProduceStream implements the "ProduceStream" method in
 // prog_logpb.ProgLogServer interface.
-func (s *Server) ProcedureStream(stream prog_logpb.ProgLog_ProcedureStreamServer) error {
+func (s *Server) ProduceStream(stream prog_logpb.ProgLog_ProduceStreamServer) error {
 	ctx := stream.Context()
-	ctx = context.WithValue(ctx, goa.MethodKey, "ProcedureStream")
+	ctx = context.WithValue(ctx, goa.MethodKey, "ProduceStream")
 	ctx = context.WithValue(ctx, goa.ServiceKey, "ProgLog")
-	_, err := s.ProcedureStreamH.Decode(ctx, nil)
+	_, err := s.ProduceStreamH.Decode(ctx, nil)
 	if err != nil {
 		return goagrpc.EncodeError(err)
 	}
-	ep := &proglog.ProcedureStreamEndpointInput{
-		Stream: &ProcedureStreamServerStream{stream: stream},
+	ep := &proglog.ProduceStreamEndpointInput{
+		Stream: &ProduceStreamServerStream{stream: stream},
 	}
-	err = s.ProcedureStreamH.Handle(ctx, ep)
+	err = s.ProduceStreamH.Handle(ctx, ep)
 	if err != nil {
 		return goagrpc.EncodeError(err)
 	}
@@ -130,51 +132,71 @@ func (s *Server) ProcedureStream(stream prog_logpb.ProgLog_ProcedureStreamServer
 // service "ConsumeStream" endpoint.
 func NewConsumeStreamHandler(endpoint goa.Endpoint, h goagrpc.StreamHandler) goagrpc.StreamHandler {
 	if h == nil {
-		h = goagrpc.NewStreamHandler(endpoint, nil)
+		h = goagrpc.NewStreamHandler(endpoint, DecodeConsumeStreamRequest)
 	}
 	return h
 }
 
 // ConsumeStream implements the "ConsumeStream" method in
 // prog_logpb.ProgLogServer interface.
-func (s *Server) ConsumeStream(stream prog_logpb.ProgLog_ConsumeStreamServer) error {
+func (s *Server) ConsumeStream(message *prog_logpb.ConsumeStreamRequest, stream prog_logpb.ProgLog_ConsumeStreamServer) error {
 	ctx := stream.Context()
 	ctx = context.WithValue(ctx, goa.MethodKey, "ConsumeStream")
 	ctx = context.WithValue(ctx, goa.ServiceKey, "ProgLog")
-	_, err := s.ConsumeStreamH.Decode(ctx, nil)
+	p, err := s.ConsumeStreamH.Decode(ctx, message)
 	if err != nil {
+		var en ErrorNamer
+		if errors.As(err, &en) {
+			switch en.ErrorName() {
+			case "OffsetOutOfRange":
+				return goagrpc.NewStatusError(codes.OutOfRange, err, goagrpc.NewErrorResponse(err))
+			}
+		}
 		return goagrpc.EncodeError(err)
 	}
 	ep := &proglog.ConsumeStreamEndpointInput{
-		Stream: &ConsumeStreamServerStream{stream: stream},
+		Stream:  &ConsumeStreamServerStream{stream: stream},
+		Payload: p.(*proglog.ConsumeRequest),
 	}
 	err = s.ConsumeStreamH.Handle(ctx, ep)
 	if err != nil {
+		var en ErrorNamer
+		if errors.As(err, &en) {
+			switch en.ErrorName() {
+			case "OffsetOutOfRange":
+				return goagrpc.NewStatusError(codes.OutOfRange, err, goagrpc.NewErrorResponse(err))
+			}
+		}
 		return goagrpc.EncodeError(err)
 	}
 	return nil
 }
 
-// SendAndClose streams instances of "prog_logpb.ProcedureStreamResponse" to
-// the "ProcedureStream" endpoint gRPC stream.
-func (s *ProcedureStreamServerStream) SendAndClose(res *proglog.Produceresponse) error {
+// Send streams instances of "prog_logpb.ProduceStreamResponse" to the
+// "ProduceStream" endpoint gRPC stream.
+func (s *ProduceStreamServerStream) Send(res *proglog.Produceresponse) error {
 	vres := proglog.NewViewedProduceresponse(res, "default")
-	v := NewProtoProcedureStreamResponse(vres.Projected)
-	return s.stream.SendAndClose(v)
+	v := NewProtoProduceStreamResponse(vres.Projected)
+	return s.stream.Send(v)
 }
 
-// Recv reads instances of "prog_logpb.ProcedureStreamStreamingRequest" from
-// the "ProcedureStream" endpoint gRPC stream.
-func (s *ProcedureStreamServerStream) Recv() (*proglog.ProduceRequest, error) {
+// Recv reads instances of "prog_logpb.ProduceStreamStreamingRequest" from the
+// "ProduceStream" endpoint gRPC stream.
+func (s *ProduceStreamServerStream) Recv() (*proglog.ProduceRequest, error) {
 	var res *proglog.ProduceRequest
 	v, err := s.stream.Recv()
 	if err != nil {
 		return res, err
 	}
-	if err = ValidateProcedureStreamStreamingRequest(v); err != nil {
+	if err = ValidateProduceStreamStreamingRequest(v); err != nil {
 		return res, err
 	}
 	return NewProduceRequest(v), nil
+}
+
+func (s *ProduceStreamServerStream) Close() error {
+	// nothing to do here
+	return nil
 }
 
 // Send streams instances of "prog_logpb.ConsumeStreamResponse" to the
@@ -183,17 +205,6 @@ func (s *ConsumeStreamServerStream) Send(res *proglog.Consumeresponse) error {
 	vres := proglog.NewViewedConsumeresponse(res, "default")
 	v := NewProtoConsumeStreamResponse(vres.Projected)
 	return s.stream.Send(v)
-}
-
-// Recv reads instances of "prog_logpb.ConsumeStreamStreamingRequest" from the
-// "ConsumeStream" endpoint gRPC stream.
-func (s *ConsumeStreamServerStream) Recv() (*proglog.ConsumeRequest, error) {
-	var res *proglog.ConsumeRequest
-	v, err := s.stream.Recv()
-	if err != nil {
-		return res, err
-	}
-	return NewConsumeRequest(v), nil
 }
 
 func (s *ConsumeStreamServerStream) Close() error {

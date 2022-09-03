@@ -18,43 +18,42 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// BuildProcedureFunc builds the remote method to invoke for "ProgLog" service
-// "Procedure" endpoint.
-func BuildProcedureFunc(grpccli prog_logpb.ProgLogClient, cliopts ...grpc.CallOption) goagrpc.RemoteFunc {
+// BuildProduceFunc builds the remote method to invoke for "ProgLog" service
+// "Produce" endpoint.
+func BuildProduceFunc(grpccli prog_logpb.ProgLogClient, cliopts ...grpc.CallOption) goagrpc.RemoteFunc {
 	return func(ctx context.Context, reqpb interface{}, opts ...grpc.CallOption) (interface{}, error) {
 		for _, opt := range cliopts {
 			opts = append(opts, opt)
 		}
 		if reqpb != nil {
-			return grpccli.Procedure(ctx, reqpb.(*prog_logpb.ProcedureRequest), opts...)
+			return grpccli.Produce(ctx, reqpb.(*prog_logpb.ProduceRequest), opts...)
 		}
-		return grpccli.Procedure(ctx, &prog_logpb.ProcedureRequest{}, opts...)
+		return grpccli.Produce(ctx, &prog_logpb.ProduceRequest{}, opts...)
 	}
 }
 
-// EncodeProcedureRequest encodes requests sent to ProgLog Procedure endpoint.
-func EncodeProcedureRequest(ctx context.Context, v interface{}, md *metadata.MD) (interface{}, error) {
+// EncodeProduceRequest encodes requests sent to ProgLog Produce endpoint.
+func EncodeProduceRequest(ctx context.Context, v interface{}, md *metadata.MD) (interface{}, error) {
 	payload, ok := v.(*proglog.ProduceRequest)
 	if !ok {
-		return nil, goagrpc.ErrInvalidType("ProgLog", "Procedure", "*proglog.ProduceRequest", v)
+		return nil, goagrpc.ErrInvalidType("ProgLog", "Produce", "*proglog.ProduceRequest", v)
 	}
-	return NewProtoProcedureRequest(payload), nil
+	return NewProtoProduceRequest(payload), nil
 }
 
-// DecodeProcedureResponse decodes responses from the ProgLog Procedure
-// endpoint.
-func DecodeProcedureResponse(ctx context.Context, v interface{}, hdr, trlr metadata.MD) (interface{}, error) {
+// DecodeProduceResponse decodes responses from the ProgLog Produce endpoint.
+func DecodeProduceResponse(ctx context.Context, v interface{}, hdr, trlr metadata.MD) (interface{}, error) {
 	var view string
 	{
 		if vals := hdr.Get("goa-view"); len(vals) > 0 {
 			view = vals[0]
 		}
 	}
-	message, ok := v.(*prog_logpb.ProcedureResponse)
+	message, ok := v.(*prog_logpb.ProduceResponse)
 	if !ok {
-		return nil, goagrpc.ErrInvalidType("ProgLog", "Procedure", "*prog_logpb.ProcedureResponse", v)
+		return nil, goagrpc.ErrInvalidType("ProgLog", "Produce", "*prog_logpb.ProduceResponse", v)
 	}
-	res := NewProcedureResult(message)
+	res := NewProduceResult(message)
 	vres := &proglogviews.Produceresponse{Projected: res, View: view}
 	if err := proglogviews.ValidateProduceresponse(vres); err != nil {
 		return nil, err
@@ -105,31 +104,31 @@ func DecodeConsumeResponse(ctx context.Context, v interface{}, hdr, trlr metadat
 	return proglog.NewConsumeresponse(vres), nil
 }
 
-// BuildProcedureStreamFunc builds the remote method to invoke for "ProgLog"
-// service "ProcedureStream" endpoint.
-func BuildProcedureStreamFunc(grpccli prog_logpb.ProgLogClient, cliopts ...grpc.CallOption) goagrpc.RemoteFunc {
+// BuildProduceStreamFunc builds the remote method to invoke for "ProgLog"
+// service "ProduceStream" endpoint.
+func BuildProduceStreamFunc(grpccli prog_logpb.ProgLogClient, cliopts ...grpc.CallOption) goagrpc.RemoteFunc {
 	return func(ctx context.Context, reqpb interface{}, opts ...grpc.CallOption) (interface{}, error) {
 		for _, opt := range cliopts {
 			opts = append(opts, opt)
 		}
 		if reqpb != nil {
-			return grpccli.ProcedureStream(ctx, opts...)
+			return grpccli.ProduceStream(ctx, opts...)
 		}
-		return grpccli.ProcedureStream(ctx, opts...)
+		return grpccli.ProduceStream(ctx, opts...)
 	}
 }
 
-// DecodeProcedureStreamResponse decodes responses from the ProgLog
-// ProcedureStream endpoint.
-func DecodeProcedureStreamResponse(ctx context.Context, v interface{}, hdr, trlr metadata.MD) (interface{}, error) {
+// DecodeProduceStreamResponse decodes responses from the ProgLog ProduceStream
+// endpoint.
+func DecodeProduceStreamResponse(ctx context.Context, v interface{}, hdr, trlr metadata.MD) (interface{}, error) {
 	var view string
 	{
 		if vals := hdr.Get("goa-view"); len(vals) > 0 {
 			view = vals[0]
 		}
 	}
-	return &ProcedureStreamClientStream{
-		stream: v.(prog_logpb.ProgLog_ProcedureStreamClient),
+	return &ProduceStreamClientStream{
+		stream: v.(prog_logpb.ProgLog_ProduceStreamClient),
 		view:   view,
 	}, nil
 }
@@ -142,10 +141,20 @@ func BuildConsumeStreamFunc(grpccli prog_logpb.ProgLogClient, cliopts ...grpc.Ca
 			opts = append(opts, opt)
 		}
 		if reqpb != nil {
-			return grpccli.ConsumeStream(ctx, opts...)
+			return grpccli.ConsumeStream(ctx, reqpb.(*prog_logpb.ConsumeStreamRequest), opts...)
 		}
-		return grpccli.ConsumeStream(ctx, opts...)
+		return grpccli.ConsumeStream(ctx, &prog_logpb.ConsumeStreamRequest{}, opts...)
 	}
+}
+
+// EncodeConsumeStreamRequest encodes requests sent to ProgLog ConsumeStream
+// endpoint.
+func EncodeConsumeStreamRequest(ctx context.Context, v interface{}, md *metadata.MD) (interface{}, error) {
+	payload, ok := v.(*proglog.ConsumeRequest)
+	if !ok {
+		return nil, goagrpc.ErrInvalidType("ProgLog", "ConsumeStream", "*proglog.ConsumeRequest", v)
+	}
+	return NewProtoConsumeStreamRequest(payload), nil
 }
 
 // DecodeConsumeStreamResponse decodes responses from the ProgLog ConsumeStream

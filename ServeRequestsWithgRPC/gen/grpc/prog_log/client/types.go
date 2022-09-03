@@ -15,19 +15,19 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// NewProtoProcedureRequest builds the gRPC request type from the payload of
-// the "Procedure" endpoint of the "ProgLog" service.
-func NewProtoProcedureRequest(payload *proglog.ProduceRequest) *prog_logpb.ProcedureRequest {
-	message := &prog_logpb.ProcedureRequest{}
+// NewProtoProduceRequest builds the gRPC request type from the payload of the
+// "Produce" endpoint of the "ProgLog" service.
+func NewProtoProduceRequest(payload *proglog.ProduceRequest) *prog_logpb.ProduceRequest {
+	message := &prog_logpb.ProduceRequest{}
 	if payload.Record != nil {
 		message.Record = svcProglogRecordToProgLogpbRecord(payload.Record)
 	}
 	return message
 }
 
-// NewProcedureResult builds the result type of the "Procedure" endpoint of the
+// NewProduceResult builds the result type of the "Produce" endpoint of the
 // "ProgLog" service from the gRPC response type.
-func NewProcedureResult(message *prog_logpb.ProcedureResponse) *proglogviews.ProduceresponseView {
+func NewProduceResult(message *prog_logpb.ProduceResponse) *proglogviews.ProduceresponseView {
 	result := &proglogviews.ProduceresponseView{
 		Offset: &message.Offset,
 	}
@@ -53,19 +53,28 @@ func NewConsumeResult(message *prog_logpb.ConsumeResponse) *proglogviews.Consume
 	return result
 }
 
-func NewProduceresponseView(v *prog_logpb.ProcedureStreamResponse) *proglogviews.ProduceresponseView {
+func NewProduceresponseView(v *prog_logpb.ProduceStreamResponse) *proglogviews.ProduceresponseView {
 	vresult := &proglogviews.ProduceresponseView{
 		Offset: &v.Offset,
 	}
 	return vresult
 }
 
-func NewProtoProcedureStreamStreamingRequest(spayload *proglog.ProduceRequest) *prog_logpb.ProcedureStreamStreamingRequest {
-	v := &prog_logpb.ProcedureStreamStreamingRequest{}
+func NewProtoProduceStreamStreamingRequest(spayload *proglog.ProduceRequest) *prog_logpb.ProduceStreamStreamingRequest {
+	v := &prog_logpb.ProduceStreamStreamingRequest{}
 	if spayload.Record != nil {
 		v.Record = svcProglogRecordToProgLogpbRecord(spayload.Record)
 	}
 	return v
+}
+
+// NewProtoConsumeStreamRequest builds the gRPC request type from the payload
+// of the "ConsumeStream" endpoint of the "ProgLog" service.
+func NewProtoConsumeStreamRequest(payload *proglog.ConsumeRequest) *prog_logpb.ConsumeStreamRequest {
+	message := &prog_logpb.ConsumeStreamRequest{
+		Offset: payload.Offset,
+	}
+	return message
 }
 
 func NewConsumeresponseView(v *prog_logpb.ConsumeStreamResponse) *proglogviews.ConsumeresponseView {
@@ -74,13 +83,6 @@ func NewConsumeresponseView(v *prog_logpb.ConsumeStreamResponse) *proglogviews.C
 		vresult.Record = protobufProgLogpbRecordToProglogviewsRecordView(v.Record)
 	}
 	return vresult
-}
-
-func NewProtoConsumeStreamStreamingRequest(spayload *proglog.ConsumeRequest) *prog_logpb.ConsumeStreamStreamingRequest {
-	v := &prog_logpb.ConsumeStreamStreamingRequest{
-		Offset: spayload.Offset,
-	}
-	return v
 }
 
 // ValidateRecord runs the validations defined on Record.

@@ -15,23 +15,24 @@ import (
 
 // Endpoints wraps the "ProgLog" service endpoints.
 type Endpoints struct {
-	Procedure       goa.Endpoint
-	Consume         goa.Endpoint
-	ProcedureStream goa.Endpoint
-	ConsumeStream   goa.Endpoint
+	Produce       goa.Endpoint
+	Consume       goa.Endpoint
+	ProduceStream goa.Endpoint
+	ConsumeStream goa.Endpoint
 }
 
-// ProcedureStreamEndpointInput holds both the payload and the server stream of
-// the "ProcedureStream" method.
-type ProcedureStreamEndpointInput struct {
-	// Stream is the server stream used by the "ProcedureStream" method to send
-	// data.
-	Stream ProcedureStreamServerStream
+// ProduceStreamEndpointInput holds both the payload and the server stream of
+// the "ProduceStream" method.
+type ProduceStreamEndpointInput struct {
+	// Stream is the server stream used by the "ProduceStream" method to send data.
+	Stream ProduceStreamServerStream
 }
 
 // ConsumeStreamEndpointInput holds both the payload and the server stream of
 // the "ConsumeStream" method.
 type ConsumeStreamEndpointInput struct {
+	// Payload is the method payload.
+	Payload *ConsumeRequest
 	// Stream is the server stream used by the "ConsumeStream" method to send data.
 	Stream ConsumeStreamServerStream
 }
@@ -39,27 +40,27 @@ type ConsumeStreamEndpointInput struct {
 // NewEndpoints wraps the methods of the "ProgLog" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Procedure:       NewProcedureEndpoint(s),
-		Consume:         NewConsumeEndpoint(s),
-		ProcedureStream: NewProcedureStreamEndpoint(s),
-		ConsumeStream:   NewConsumeStreamEndpoint(s),
+		Produce:       NewProduceEndpoint(s),
+		Consume:       NewConsumeEndpoint(s),
+		ProduceStream: NewProduceStreamEndpoint(s),
+		ConsumeStream: NewConsumeStreamEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "ProgLog" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
-	e.Procedure = m(e.Procedure)
+	e.Produce = m(e.Produce)
 	e.Consume = m(e.Consume)
-	e.ProcedureStream = m(e.ProcedureStream)
+	e.ProduceStream = m(e.ProduceStream)
 	e.ConsumeStream = m(e.ConsumeStream)
 }
 
-// NewProcedureEndpoint returns an endpoint function that calls the method
-// "Procedure" of service "ProgLog".
-func NewProcedureEndpoint(s Service) goa.Endpoint {
+// NewProduceEndpoint returns an endpoint function that calls the method
+// "Produce" of service "ProgLog".
+func NewProduceEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		p := req.(*ProduceRequest)
-		res, err := s.Procedure(ctx, p)
+		res, err := s.Produce(ctx, p)
 		if err != nil {
 			return nil, err
 		}
@@ -82,12 +83,12 @@ func NewConsumeEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewProcedureStreamEndpoint returns an endpoint function that calls the
-// method "ProcedureStream" of service "ProgLog".
-func NewProcedureStreamEndpoint(s Service) goa.Endpoint {
+// NewProduceStreamEndpoint returns an endpoint function that calls the method
+// "ProduceStream" of service "ProgLog".
+func NewProduceStreamEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
-		ep := req.(*ProcedureStreamEndpointInput)
-		return nil, s.ProcedureStream(ctx, ep.Stream)
+		ep := req.(*ProduceStreamEndpointInput)
+		return nil, s.ProduceStream(ctx, ep.Stream)
 	}
 }
 
@@ -96,6 +97,6 @@ func NewProcedureStreamEndpoint(s Service) goa.Endpoint {
 func NewConsumeStreamEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		ep := req.(*ConsumeStreamEndpointInput)
-		return nil, s.ConsumeStream(ctx, ep.Stream)
+		return nil, s.ConsumeStream(ctx, ep.Payload, ep.Stream)
 	}
 }

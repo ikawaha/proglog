@@ -22,14 +22,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProgLogClient interface {
-	// Procedure implements Procedure.
-	Procedure(ctx context.Context, in *ProcedureRequest, opts ...grpc.CallOption) (*ProcedureResponse, error)
+	// Produce implements Produce.
+	Produce(ctx context.Context, in *ProduceRequest, opts ...grpc.CallOption) (*ProduceResponse, error)
 	// Consume implements Consume.
 	Consume(ctx context.Context, in *ConsumeRequest, opts ...grpc.CallOption) (*ConsumeResponse, error)
-	// ProcedureStream implements ProcedureStream.
-	ProcedureStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ProcedureStreamClient, error)
+	// ProduceStream implements ProduceStream.
+	ProduceStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ProduceStreamClient, error)
 	// ConsumeStream implements ConsumeStream.
-	ConsumeStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ConsumeStreamClient, error)
+	ConsumeStream(ctx context.Context, in *ConsumeStreamRequest, opts ...grpc.CallOption) (ProgLog_ConsumeStreamClient, error)
 }
 
 type progLogClient struct {
@@ -40,9 +40,9 @@ func NewProgLogClient(cc grpc.ClientConnInterface) ProgLogClient {
 	return &progLogClient{cc}
 }
 
-func (c *progLogClient) Procedure(ctx context.Context, in *ProcedureRequest, opts ...grpc.CallOption) (*ProcedureResponse, error) {
-	out := new(ProcedureResponse)
-	err := c.cc.Invoke(ctx, "/prog_log.ProgLog/Procedure", in, out, opts...)
+func (c *progLogClient) Produce(ctx context.Context, in *ProduceRequest, opts ...grpc.CallOption) (*ProduceResponse, error) {
+	out := new(ProduceResponse)
+	err := c.cc.Invoke(ctx, "/prog_log.ProgLog/Produce", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,61 +58,59 @@ func (c *progLogClient) Consume(ctx context.Context, in *ConsumeRequest, opts ..
 	return out, nil
 }
 
-func (c *progLogClient) ProcedureStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ProcedureStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ProgLog_ServiceDesc.Streams[0], "/prog_log.ProgLog/ProcedureStream", opts...)
+func (c *progLogClient) ProduceStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ProduceStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ProgLog_ServiceDesc.Streams[0], "/prog_log.ProgLog/ProduceStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &progLogProcedureStreamClient{stream}
+	x := &progLogProduceStreamClient{stream}
 	return x, nil
 }
 
-type ProgLog_ProcedureStreamClient interface {
-	Send(*ProcedureStreamStreamingRequest) error
-	CloseAndRecv() (*ProcedureStreamResponse, error)
+type ProgLog_ProduceStreamClient interface {
+	Send(*ProduceStreamStreamingRequest) error
+	Recv() (*ProduceStreamResponse, error)
 	grpc.ClientStream
 }
 
-type progLogProcedureStreamClient struct {
+type progLogProduceStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *progLogProcedureStreamClient) Send(m *ProcedureStreamStreamingRequest) error {
+func (x *progLogProduceStreamClient) Send(m *ProduceStreamStreamingRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *progLogProcedureStreamClient) CloseAndRecv() (*ProcedureStreamResponse, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(ProcedureStreamResponse)
+func (x *progLogProduceStreamClient) Recv() (*ProduceStreamResponse, error) {
+	m := new(ProduceStreamResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *progLogClient) ConsumeStream(ctx context.Context, opts ...grpc.CallOption) (ProgLog_ConsumeStreamClient, error) {
+func (c *progLogClient) ConsumeStream(ctx context.Context, in *ConsumeStreamRequest, opts ...grpc.CallOption) (ProgLog_ConsumeStreamClient, error) {
 	stream, err := c.cc.NewStream(ctx, &ProgLog_ServiceDesc.Streams[1], "/prog_log.ProgLog/ConsumeStream", opts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &progLogConsumeStreamClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 type ProgLog_ConsumeStreamClient interface {
-	Send(*ConsumeStreamStreamingRequest) error
 	Recv() (*ConsumeStreamResponse, error)
 	grpc.ClientStream
 }
 
 type progLogConsumeStreamClient struct {
 	grpc.ClientStream
-}
-
-func (x *progLogConsumeStreamClient) Send(m *ConsumeStreamStreamingRequest) error {
-	return x.ClientStream.SendMsg(m)
 }
 
 func (x *progLogConsumeStreamClient) Recv() (*ConsumeStreamResponse, error) {
@@ -127,14 +125,14 @@ func (x *progLogConsumeStreamClient) Recv() (*ConsumeStreamResponse, error) {
 // All implementations must embed UnimplementedProgLogServer
 // for forward compatibility
 type ProgLogServer interface {
-	// Procedure implements Procedure.
-	Procedure(context.Context, *ProcedureRequest) (*ProcedureResponse, error)
+	// Produce implements Produce.
+	Produce(context.Context, *ProduceRequest) (*ProduceResponse, error)
 	// Consume implements Consume.
 	Consume(context.Context, *ConsumeRequest) (*ConsumeResponse, error)
-	// ProcedureStream implements ProcedureStream.
-	ProcedureStream(ProgLog_ProcedureStreamServer) error
+	// ProduceStream implements ProduceStream.
+	ProduceStream(ProgLog_ProduceStreamServer) error
 	// ConsumeStream implements ConsumeStream.
-	ConsumeStream(ProgLog_ConsumeStreamServer) error
+	ConsumeStream(*ConsumeStreamRequest, ProgLog_ConsumeStreamServer) error
 	mustEmbedUnimplementedProgLogServer()
 }
 
@@ -142,16 +140,16 @@ type ProgLogServer interface {
 type UnimplementedProgLogServer struct {
 }
 
-func (UnimplementedProgLogServer) Procedure(context.Context, *ProcedureRequest) (*ProcedureResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Procedure not implemented")
+func (UnimplementedProgLogServer) Produce(context.Context, *ProduceRequest) (*ProduceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Produce not implemented")
 }
 func (UnimplementedProgLogServer) Consume(context.Context, *ConsumeRequest) (*ConsumeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Consume not implemented")
 }
-func (UnimplementedProgLogServer) ProcedureStream(ProgLog_ProcedureStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method ProcedureStream not implemented")
+func (UnimplementedProgLogServer) ProduceStream(ProgLog_ProduceStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method ProduceStream not implemented")
 }
-func (UnimplementedProgLogServer) ConsumeStream(ProgLog_ConsumeStreamServer) error {
+func (UnimplementedProgLogServer) ConsumeStream(*ConsumeStreamRequest, ProgLog_ConsumeStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method ConsumeStream not implemented")
 }
 func (UnimplementedProgLogServer) mustEmbedUnimplementedProgLogServer() {}
@@ -167,20 +165,20 @@ func RegisterProgLogServer(s grpc.ServiceRegistrar, srv ProgLogServer) {
 	s.RegisterService(&ProgLog_ServiceDesc, srv)
 }
 
-func _ProgLog_Procedure_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProcedureRequest)
+func _ProgLog_Produce_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProduceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ProgLogServer).Procedure(ctx, in)
+		return srv.(ProgLogServer).Produce(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/prog_log.ProgLog/Procedure",
+		FullMethod: "/prog_log.ProgLog/Produce",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProgLogServer).Procedure(ctx, req.(*ProcedureRequest))
+		return srv.(ProgLogServer).Produce(ctx, req.(*ProduceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -203,26 +201,26 @@ func _ProgLog_Consume_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProgLog_ProcedureStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ProgLogServer).ProcedureStream(&progLogProcedureStreamServer{stream})
+func _ProgLog_ProduceStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ProgLogServer).ProduceStream(&progLogProduceStreamServer{stream})
 }
 
-type ProgLog_ProcedureStreamServer interface {
-	SendAndClose(*ProcedureStreamResponse) error
-	Recv() (*ProcedureStreamStreamingRequest, error)
+type ProgLog_ProduceStreamServer interface {
+	Send(*ProduceStreamResponse) error
+	Recv() (*ProduceStreamStreamingRequest, error)
 	grpc.ServerStream
 }
 
-type progLogProcedureStreamServer struct {
+type progLogProduceStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *progLogProcedureStreamServer) SendAndClose(m *ProcedureStreamResponse) error {
+func (x *progLogProduceStreamServer) Send(m *ProduceStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *progLogProcedureStreamServer) Recv() (*ProcedureStreamStreamingRequest, error) {
-	m := new(ProcedureStreamStreamingRequest)
+func (x *progLogProduceStreamServer) Recv() (*ProduceStreamStreamingRequest, error) {
+	m := new(ProduceStreamStreamingRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -230,12 +228,15 @@ func (x *progLogProcedureStreamServer) Recv() (*ProcedureStreamStreamingRequest,
 }
 
 func _ProgLog_ConsumeStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ProgLogServer).ConsumeStream(&progLogConsumeStreamServer{stream})
+	m := new(ConsumeStreamRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ProgLogServer).ConsumeStream(m, &progLogConsumeStreamServer{stream})
 }
 
 type ProgLog_ConsumeStreamServer interface {
 	Send(*ConsumeStreamResponse) error
-	Recv() (*ConsumeStreamStreamingRequest, error)
 	grpc.ServerStream
 }
 
@@ -247,14 +248,6 @@ func (x *progLogConsumeStreamServer) Send(m *ConsumeStreamResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *progLogConsumeStreamServer) Recv() (*ConsumeStreamStreamingRequest, error) {
-	m := new(ConsumeStreamStreamingRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // ProgLog_ServiceDesc is the grpc.ServiceDesc for ProgLog service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -263,8 +256,8 @@ var ProgLog_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ProgLogServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Procedure",
-			Handler:    _ProgLog_Procedure_Handler,
+			MethodName: "Produce",
+			Handler:    _ProgLog_Produce_Handler,
 		},
 		{
 			MethodName: "Consume",
@@ -273,15 +266,15 @@ var ProgLog_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ProcedureStream",
-			Handler:       _ProgLog_ProcedureStream_Handler,
+			StreamName:    "ProduceStream",
+			Handler:       _ProgLog_ProduceStream_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "ConsumeStream",
 			Handler:       _ProgLog_ConsumeStream_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "goadesign_goagen_prog_log.proto",

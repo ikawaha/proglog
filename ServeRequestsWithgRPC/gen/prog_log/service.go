@@ -14,14 +14,14 @@ import (
 
 // Service is the ProgLog service interface.
 type Service interface {
-	// Procedure implements Procedure.
-	Procedure(context.Context, *ProduceRequest) (res *Produceresponse, err error)
+	// Produce implements Produce.
+	Produce(context.Context, *ProduceRequest) (res *Produceresponse, err error)
 	// Consume implements Consume.
 	Consume(context.Context, *ConsumeRequest) (res *Consumeresponse, err error)
-	// ProcedureStream implements ProcedureStream.
-	ProcedureStream(context.Context, ProcedureStreamServerStream) (err error)
+	// ProduceStream implements ProduceStream.
+	ProduceStream(context.Context, ProduceStreamServerStream) (err error)
 	// ConsumeStream implements ConsumeStream.
-	ConsumeStream(context.Context, ConsumeStreamServerStream) (err error)
+	ConsumeStream(context.Context, *ConsumeRequest, ConsumeStreamServerStream) (err error)
 }
 
 // ServiceName is the name of the service as defined in the design. This is the
@@ -32,25 +32,28 @@ const ServiceName = "ProgLog"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [4]string{"Procedure", "Consume", "ProcedureStream", "ConsumeStream"}
+var MethodNames = [4]string{"Produce", "Consume", "ProduceStream", "ConsumeStream"}
 
-// ProcedureStreamServerStream is the interface a "ProcedureStream" endpoint
-// server stream must satisfy.
-type ProcedureStreamServerStream interface {
-	// SendAndClose streams instances of "Produceresponse" and closes the stream.
-	SendAndClose(*Produceresponse) error
+// ProduceStreamServerStream is the interface a "ProduceStream" endpoint server
+// stream must satisfy.
+type ProduceStreamServerStream interface {
+	// Send streams instances of "Produceresponse".
+	Send(*Produceresponse) error
 	// Recv reads instances of "ProduceRequest" from the stream.
 	Recv() (*ProduceRequest, error)
+	// Close closes the stream.
+	Close() error
 }
 
-// ProcedureStreamClientStream is the interface a "ProcedureStream" endpoint
-// client stream must satisfy.
-type ProcedureStreamClientStream interface {
+// ProduceStreamClientStream is the interface a "ProduceStream" endpoint client
+// stream must satisfy.
+type ProduceStreamClientStream interface {
 	// Send streams instances of "ProduceRequest".
 	Send(*ProduceRequest) error
-	// CloseAndRecv stops sending messages to the stream and reads instances of
-	// "Produceresponse" from the stream.
-	CloseAndRecv() (*Produceresponse, error)
+	// Recv reads instances of "Produceresponse" from the stream.
+	Recv() (*Produceresponse, error)
+	// Close closes the stream.
+	Close() error
 }
 
 // ConsumeStreamServerStream is the interface a "ConsumeStream" endpoint server
@@ -58,8 +61,6 @@ type ProcedureStreamClientStream interface {
 type ConsumeStreamServerStream interface {
 	// Send streams instances of "Consumeresponse".
 	Send(*Consumeresponse) error
-	// Recv reads instances of "ConsumeRequest" from the stream.
-	Recv() (*ConsumeRequest, error)
 	// Close closes the stream.
 	Close() error
 }
@@ -67,12 +68,8 @@ type ConsumeStreamServerStream interface {
 // ConsumeStreamClientStream is the interface a "ConsumeStream" endpoint client
 // stream must satisfy.
 type ConsumeStreamClientStream interface {
-	// Send streams instances of "ConsumeRequest".
-	Send(*ConsumeRequest) error
 	// Recv reads instances of "Consumeresponse" from the stream.
 	Recv() (*Consumeresponse, error)
-	// Close closes the stream.
-	Close() error
 }
 
 // ConsumeRequest is the payload type of the ProgLog service Consume method.
@@ -85,12 +82,14 @@ type Consumeresponse struct {
 	Record *Record
 }
 
-// ProduceRequest is the payload type of the ProgLog service Procedure method.
+type OffsetOutOfRange uint64
+
+// ProduceRequest is the payload type of the ProgLog service Produce method.
 type ProduceRequest struct {
 	Record *Record
 }
 
-// Produceresponse is the result type of the ProgLog service Procedure method.
+// Produceresponse is the result type of the ProgLog service Produce method.
 type Produceresponse struct {
 	Offset uint64
 }
@@ -98,6 +97,16 @@ type Produceresponse struct {
 type Record struct {
 	Value  []byte
 	Offset uint64
+}
+
+// Error returns an error description.
+func (e OffsetOutOfRange) Error() string {
+	return ""
+}
+
+// ErrorName returns "OffsetOutOfRange".
+func (e OffsetOutOfRange) ErrorName() string {
+	return "OffsetOutOfRange"
 }
 
 // NewProduceresponse initializes result type Produceresponse from viewed

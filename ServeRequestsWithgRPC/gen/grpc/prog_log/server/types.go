@@ -15,9 +15,9 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// NewProcedurePayload builds the payload of the "Procedure" endpoint of the
+// NewProducePayload builds the payload of the "Produce" endpoint of the
 // "ProgLog" service from the gRPC request type.
-func NewProcedurePayload(message *prog_logpb.ProcedureRequest) *proglog.ProduceRequest {
+func NewProducePayload(message *prog_logpb.ProduceRequest) *proglog.ProduceRequest {
 	v := &proglog.ProduceRequest{}
 	if message.Record != nil {
 		v.Record = protobufProgLogpbRecordToProglogRecord(message.Record)
@@ -25,10 +25,10 @@ func NewProcedurePayload(message *prog_logpb.ProcedureRequest) *proglog.ProduceR
 	return v
 }
 
-// NewProtoProcedureResponse builds the gRPC response type from the result of
-// the "Procedure" endpoint of the "ProgLog" service.
-func NewProtoProcedureResponse(result *proglogviews.ProduceresponseView) *prog_logpb.ProcedureResponse {
-	message := &prog_logpb.ProcedureResponse{}
+// NewProtoProduceResponse builds the gRPC response type from the result of the
+// "Produce" endpoint of the "ProgLog" service.
+func NewProtoProduceResponse(result *proglogviews.ProduceresponseView) *prog_logpb.ProduceResponse {
+	message := &prog_logpb.ProduceResponse{}
 	if result.Offset != nil {
 		message.Offset = *result.Offset
 	}
@@ -54,22 +54,31 @@ func NewProtoConsumeResponse(result *proglogviews.ConsumeresponseView) *prog_log
 	return message
 }
 
-// NewProtoProcedureStreamResponse builds the gRPC response type from the
-// result of the "ProcedureStream" endpoint of the "ProgLog" service.
-func NewProtoProcedureStreamResponse(result *proglogviews.ProduceresponseView) *prog_logpb.ProcedureStreamResponse {
-	message := &prog_logpb.ProcedureStreamResponse{}
+// NewProtoProduceStreamResponse builds the gRPC response type from the result
+// of the "ProduceStream" endpoint of the "ProgLog" service.
+func NewProtoProduceStreamResponse(result *proglogviews.ProduceresponseView) *prog_logpb.ProduceStreamResponse {
+	message := &prog_logpb.ProduceStreamResponse{}
 	if result.Offset != nil {
 		message.Offset = *result.Offset
 	}
 	return message
 }
 
-func NewProduceRequest(v *prog_logpb.ProcedureStreamStreamingRequest) *proglog.ProduceRequest {
+func NewProduceRequest(v *prog_logpb.ProduceStreamStreamingRequest) *proglog.ProduceRequest {
 	spayload := &proglog.ProduceRequest{}
 	if v.Record != nil {
 		spayload.Record = protobufProgLogpbRecordToProglogRecord(v.Record)
 	}
 	return spayload
+}
+
+// NewConsumeStreamPayload builds the payload of the "ConsumeStream" endpoint
+// of the "ProgLog" service from the gRPC request type.
+func NewConsumeStreamPayload(message *prog_logpb.ConsumeStreamRequest) *proglog.ConsumeRequest {
+	v := &proglog.ConsumeRequest{
+		Offset: message.Offset,
+	}
+	return v
 }
 
 // NewProtoConsumeStreamResponse builds the gRPC response type from the result
@@ -82,15 +91,8 @@ func NewProtoConsumeStreamResponse(result *proglogviews.ConsumeresponseView) *pr
 	return message
 }
 
-func NewConsumeRequest(v *prog_logpb.ConsumeStreamStreamingRequest) *proglog.ConsumeRequest {
-	spayload := &proglog.ConsumeRequest{
-		Offset: v.Offset,
-	}
-	return spayload
-}
-
-// ValidateProcedureRequest runs the validations defined on ProcedureRequest.
-func ValidateProcedureRequest(message *prog_logpb.ProcedureRequest) (err error) {
+// ValidateProduceRequest runs the validations defined on ProduceRequest.
+func ValidateProduceRequest(message *prog_logpb.ProduceRequest) (err error) {
 	if message.Record == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("record", "message"))
 	}
@@ -105,9 +107,9 @@ func ValidateRecord(record *prog_logpb.Record) (err error) {
 	return
 }
 
-// ValidateProcedureStreamStreamingRequest runs the validations defined on
-// ProcedureStreamStreamingRequest.
-func ValidateProcedureStreamStreamingRequest(stream *prog_logpb.ProcedureStreamStreamingRequest) (err error) {
+// ValidateProduceStreamStreamingRequest runs the validations defined on
+// ProduceStreamStreamingRequest.
+func ValidateProduceStreamStreamingRequest(stream *prog_logpb.ProduceStreamStreamingRequest) (err error) {
 	if stream.Record == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("record", "stream"))
 	}

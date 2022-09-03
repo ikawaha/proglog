@@ -17,37 +17,37 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// EncodeProcedureResponse encodes responses from the "ProgLog" service
-// "Procedure" endpoint.
-func EncodeProcedureResponse(ctx context.Context, v interface{}, hdr, trlr *metadata.MD) (interface{}, error) {
+// EncodeProduceResponse encodes responses from the "ProgLog" service "Produce"
+// endpoint.
+func EncodeProduceResponse(ctx context.Context, v interface{}, hdr, trlr *metadata.MD) (interface{}, error) {
 	vres, ok := v.(*proglogviews.Produceresponse)
 	if !ok {
-		return nil, goagrpc.ErrInvalidType("ProgLog", "Procedure", "*proglogviews.Produceresponse", v)
+		return nil, goagrpc.ErrInvalidType("ProgLog", "Produce", "*proglogviews.Produceresponse", v)
 	}
 	result := vres.Projected
 	(*hdr).Append("goa-view", vres.View)
-	resp := NewProtoProcedureResponse(result)
+	resp := NewProtoProduceResponse(result)
 	return resp, nil
 }
 
-// DecodeProcedureRequest decodes requests sent to "ProgLog" service
-// "Procedure" endpoint.
-func DecodeProcedureRequest(ctx context.Context, v interface{}, md metadata.MD) (interface{}, error) {
+// DecodeProduceRequest decodes requests sent to "ProgLog" service "Produce"
+// endpoint.
+func DecodeProduceRequest(ctx context.Context, v interface{}, md metadata.MD) (interface{}, error) {
 	var (
-		message *prog_logpb.ProcedureRequest
+		message *prog_logpb.ProduceRequest
 		ok      bool
 	)
 	{
-		if message, ok = v.(*prog_logpb.ProcedureRequest); !ok {
-			return nil, goagrpc.ErrInvalidType("ProgLog", "Procedure", "*prog_logpb.ProcedureRequest", v)
+		if message, ok = v.(*prog_logpb.ProduceRequest); !ok {
+			return nil, goagrpc.ErrInvalidType("ProgLog", "Produce", "*prog_logpb.ProduceRequest", v)
 		}
-		if err := ValidateProcedureRequest(message); err != nil {
+		if err := ValidateProduceRequest(message); err != nil {
 			return nil, err
 		}
 	}
 	var payload *proglog.ProduceRequest
 	{
-		payload = NewProcedurePayload(message)
+		payload = NewProducePayload(message)
 	}
 	return payload, nil
 }
@@ -84,16 +84,16 @@ func DecodeConsumeRequest(ctx context.Context, v interface{}, md metadata.MD) (i
 	return payload, nil
 }
 
-// EncodeProcedureStreamResponse encodes responses from the "ProgLog" service
-// "ProcedureStream" endpoint.
-func EncodeProcedureStreamResponse(ctx context.Context, v interface{}, hdr, trlr *metadata.MD) (interface{}, error) {
+// EncodeProduceStreamResponse encodes responses from the "ProgLog" service
+// "ProduceStream" endpoint.
+func EncodeProduceStreamResponse(ctx context.Context, v interface{}, hdr, trlr *metadata.MD) (interface{}, error) {
 	vres, ok := v.(*proglogviews.Produceresponse)
 	if !ok {
-		return nil, goagrpc.ErrInvalidType("ProgLog", "ProcedureStream", "*proglogviews.Produceresponse", v)
+		return nil, goagrpc.ErrInvalidType("ProgLog", "ProduceStream", "*proglogviews.Produceresponse", v)
 	}
 	result := vres.Projected
 	(*hdr).Append("goa-view", vres.View)
-	resp := NewProtoProcedureStreamResponse(result)
+	resp := NewProtoProduceStreamResponse(result)
 	return resp, nil
 }
 
@@ -108,4 +108,23 @@ func EncodeConsumeStreamResponse(ctx context.Context, v interface{}, hdr, trlr *
 	(*hdr).Append("goa-view", vres.View)
 	resp := NewProtoConsumeStreamResponse(result)
 	return resp, nil
+}
+
+// DecodeConsumeStreamRequest decodes requests sent to "ProgLog" service
+// "ConsumeStream" endpoint.
+func DecodeConsumeStreamRequest(ctx context.Context, v interface{}, md metadata.MD) (interface{}, error) {
+	var (
+		message *prog_logpb.ConsumeStreamRequest
+		ok      bool
+	)
+	{
+		if message, ok = v.(*prog_logpb.ConsumeStreamRequest); !ok {
+			return nil, goagrpc.ErrInvalidType("ProgLog", "ConsumeStream", "*prog_logpb.ConsumeStreamRequest", v)
+		}
+	}
+	var payload *proglog.ConsumeRequest
+	{
+		payload = NewConsumeStreamPayload(message)
+	}
+	return payload, nil
 }

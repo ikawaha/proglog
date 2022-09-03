@@ -13,17 +13,17 @@ option go_package = "/prog_logpb";
 
 // Service is the ProgLog service interface.
 service ProgLog {
-	// Procedure implements Procedure.
-	rpc Procedure (ProcedureRequest) returns (ProcedureResponse);
+	// Produce implements Produce.
+	rpc Produce (ProduceRequest) returns (ProduceResponse);
 	// Consume implements Consume.
 	rpc Consume (ConsumeRequest) returns (ConsumeResponse);
-	// ProcedureStream implements ProcedureStream.
-	rpc ProcedureStream (stream ProcedureStreamStreamingRequest) returns (ProcedureStreamResponse);
+	// ProduceStream implements ProduceStream.
+	rpc ProduceStream (stream ProduceStreamStreamingRequest) returns (stream ProduceStreamResponse);
 	// ConsumeStream implements ConsumeStream.
-	rpc ConsumeStream (stream ConsumeStreamStreamingRequest) returns (stream ConsumeStreamResponse);
+	rpc ConsumeStream (ConsumeStreamRequest) returns (stream ConsumeStreamResponse);
 }
 
-message ProcedureRequest {
+message ProduceRequest {
 	Record record = 1;
 }
 
@@ -32,7 +32,7 @@ message Record {
 	uint64 offset = 2;
 }
 
-message ProcedureResponse {
+message ProduceResponse {
 	uint64 offset = 1;
 }
 
@@ -44,15 +44,15 @@ message ConsumeResponse {
 	Record record = 1;
 }
 
-message ProcedureStreamStreamingRequest {
+message ProduceStreamStreamingRequest {
 	Record record = 1;
 }
 
-message ProcedureStreamResponse {
+message ProduceStreamResponse {
 	uint64 offset = 1;
 }
 
-message ConsumeStreamStreamingRequest {
+message ConsumeStreamRequest {
 	uint64 offset = 1;
 }
 

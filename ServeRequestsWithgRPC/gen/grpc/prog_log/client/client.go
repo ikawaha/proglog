@@ -14,6 +14,7 @@ import (
 	proglogviews "proglog/gen/prog_log/views"
 
 	goagrpc "goa.design/goa/v3/grpc"
+	goapb "goa.design/goa/v3/grpc/pb"
 	goa "goa.design/goa/v3/pkg"
 	"google.golang.org/grpc"
 )
@@ -24,10 +25,10 @@ type Client struct {
 	opts    []grpc.CallOption
 }
 
-// ProcedureStreamClientStream implements the
-// proglog.ProcedureStreamClientStream interface.
-type ProcedureStreamClientStream struct {
-	stream prog_logpb.ProgLog_ProcedureStreamClient
+// ProduceStreamClientStream implements the proglog.ProduceStreamClientStream
+// interface.
+type ProduceStreamClientStream struct {
+	stream prog_logpb.ProgLog_ProduceStreamClient
 	view   string
 }
 
@@ -46,14 +47,13 @@ func NewClient(cc *grpc.ClientConn, opts ...grpc.CallOption) *Client {
 	}
 }
 
-// Procedure calls the "Procedure" function in prog_logpb.ProgLogClient
-// interface.
-func (c *Client) Procedure() goa.Endpoint {
+// Produce calls the "Produce" function in prog_logpb.ProgLogClient interface.
+func (c *Client) Produce() goa.Endpoint {
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
 		inv := goagrpc.NewInvoker(
-			BuildProcedureFunc(c.grpccli, c.opts...),
-			EncodeProcedureRequest,
-			DecodeProcedureResponse)
+			BuildProduceFunc(c.grpccli, c.opts...),
+			EncodeProduceRequest,
+			DecodeProduceResponse)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
 			return nil, goa.Fault(err.Error())
@@ -77,14 +77,14 @@ func (c *Client) Consume() goa.Endpoint {
 	}
 }
 
-// ProcedureStream calls the "ProcedureStream" function in
-// prog_logpb.ProgLogClient interface.
-func (c *Client) ProcedureStream() goa.Endpoint {
+// ProduceStream calls the "ProduceStream" function in prog_logpb.ProgLogClient
+// interface.
+func (c *Client) ProduceStream() goa.Endpoint {
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
 		inv := goagrpc.NewInvoker(
-			BuildProcedureStreamFunc(c.grpccli, c.opts...),
+			BuildProduceStreamFunc(c.grpccli, c.opts...),
 			nil,
-			DecodeProcedureStreamResponse)
+			DecodeProduceStreamResponse)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
 			return nil, goa.Fault(err.Error())
@@ -99,21 +99,27 @@ func (c *Client) ConsumeStream() goa.Endpoint {
 	return func(ctx context.Context, v interface{}) (interface{}, error) {
 		inv := goagrpc.NewInvoker(
 			BuildConsumeStreamFunc(c.grpccli, c.opts...),
-			nil,
+			EncodeConsumeStreamRequest,
 			DecodeConsumeStreamResponse)
 		res, err := inv.Invoke(ctx, v)
 		if err != nil {
-			return nil, goa.Fault(err.Error())
+			resp := goagrpc.DecodeError(err)
+			switch message := resp.(type) {
+			case *goapb.ErrorResponse:
+				return nil, goagrpc.NewServiceError(message)
+			default:
+				return nil, goa.Fault(err.Error())
+			}
 		}
 		return res, nil
 	}
 }
 
-// CloseAndRecv reads instances of "prog_logpb.ProcedureStreamResponse" from
-// the "ProcedureStream" endpoint gRPC stream.
-func (s *ProcedureStreamClientStream) CloseAndRecv() (*proglog.Produceresponse, error) {
+// Recv reads instances of "prog_logpb.ProduceStreamResponse" from the
+// "ProduceStream" endpoint gRPC stream.
+func (s *ProduceStreamClientStream) Recv() (*proglog.Produceresponse, error) {
 	var res *proglog.Produceresponse
-	v, err := s.stream.CloseAndRecv()
+	v, err := s.stream.Recv()
 	if err != nil {
 		return res, err
 	}
@@ -125,11 +131,16 @@ func (s *ProcedureStreamClientStream) CloseAndRecv() (*proglog.Produceresponse, 
 	return proglog.NewProduceresponse(vres), nil
 }
 
-// Send streams instances of "prog_logpb.ProcedureStreamStreamingRequest" to
-// the "ProcedureStream" endpoint gRPC stream.
-func (s *ProcedureStreamClientStream) Send(res *proglog.ProduceRequest) error {
-	v := NewProtoProcedureStreamStreamingRequest(res)
+// Send streams instances of "prog_logpb.ProduceStreamStreamingRequest" to the
+// "ProduceStream" endpoint gRPC stream.
+func (s *ProduceStreamClientStream) Send(res *proglog.ProduceRequest) error {
+	v := NewProtoProduceStreamStreamingRequest(res)
 	return s.stream.Send(v)
+}
+
+func (s *ProduceStreamClientStream) Close() error {
+	// Close the send direction of the stream
+	return s.stream.CloseSend()
 }
 
 // Recv reads instances of "prog_logpb.ConsumeStreamResponse" from the
@@ -146,16 +157,4 @@ func (s *ConsumeStreamClientStream) Recv() (*proglog.Consumeresponse, error) {
 		return nil, err
 	}
 	return proglog.NewConsumeresponse(vres), nil
-}
-
-// Send streams instances of "prog_logpb.ConsumeStreamStreamingRequest" to the
-// "ConsumeStream" endpoint gRPC stream.
-func (s *ConsumeStreamClientStream) Send(res *proglog.ConsumeRequest) error {
-	v := NewProtoConsumeStreamStreamingRequest(res)
-	return s.stream.Send(v)
-}
-
-func (s *ConsumeStreamClientStream) Close() error {
-	// Close the send direction of the stream
-	return s.stream.CloseSend()
 }

@@ -15,26 +15,26 @@ import (
 
 // Client is the "ProgLog" service client.
 type Client struct {
-	ProcedureEndpoint       goa.Endpoint
-	ConsumeEndpoint         goa.Endpoint
-	ProcedureStreamEndpoint goa.Endpoint
-	ConsumeStreamEndpoint   goa.Endpoint
+	ProduceEndpoint       goa.Endpoint
+	ConsumeEndpoint       goa.Endpoint
+	ProduceStreamEndpoint goa.Endpoint
+	ConsumeStreamEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "ProgLog" service client given the endpoints.
-func NewClient(procedure, consume, procedureStream, consumeStream goa.Endpoint) *Client {
+func NewClient(produce, consume, produceStream, consumeStream goa.Endpoint) *Client {
 	return &Client{
-		ProcedureEndpoint:       procedure,
-		ConsumeEndpoint:         consume,
-		ProcedureStreamEndpoint: procedureStream,
-		ConsumeStreamEndpoint:   consumeStream,
+		ProduceEndpoint:       produce,
+		ConsumeEndpoint:       consume,
+		ProduceStreamEndpoint: produceStream,
+		ConsumeStreamEndpoint: consumeStream,
 	}
 }
 
-// Procedure calls the "Procedure" endpoint of the "ProgLog" service.
-func (c *Client) Procedure(ctx context.Context, p *ProduceRequest) (res *Produceresponse, err error) {
+// Produce calls the "Produce" endpoint of the "ProgLog" service.
+func (c *Client) Produce(ctx context.Context, p *ProduceRequest) (res *Produceresponse, err error) {
 	var ires interface{}
-	ires, err = c.ProcedureEndpoint(ctx, p)
+	ires, err = c.ProduceEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
@@ -51,21 +51,23 @@ func (c *Client) Consume(ctx context.Context, p *ConsumeRequest) (res *Consumere
 	return ires.(*Consumeresponse), nil
 }
 
-// ProcedureStream calls the "ProcedureStream" endpoint of the "ProgLog"
-// service.
-func (c *Client) ProcedureStream(ctx context.Context) (res ProcedureStreamClientStream, err error) {
+// ProduceStream calls the "ProduceStream" endpoint of the "ProgLog" service.
+func (c *Client) ProduceStream(ctx context.Context) (res ProduceStreamClientStream, err error) {
 	var ires interface{}
-	ires, err = c.ProcedureStreamEndpoint(ctx, nil)
+	ires, err = c.ProduceStreamEndpoint(ctx, nil)
 	if err != nil {
 		return
 	}
-	return ires.(ProcedureStreamClientStream), nil
+	return ires.(ProduceStreamClientStream), nil
 }
 
 // ConsumeStream calls the "ConsumeStream" endpoint of the "ProgLog" service.
-func (c *Client) ConsumeStream(ctx context.Context) (res ConsumeStreamClientStream, err error) {
+// ConsumeStream may return the following errors:
+//   - "OffsetOutOfRange" (type OffsetOutOfRange)
+//   - error: internal error
+func (c *Client) ConsumeStream(ctx context.Context, p *ConsumeRequest) (res ConsumeStreamClientStream, err error) {
 	var ires interface{}
-	ires, err = c.ConsumeStreamEndpoint(ctx, nil)
+	ires, err = c.ConsumeStreamEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

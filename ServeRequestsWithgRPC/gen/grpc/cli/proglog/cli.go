@@ -21,13 +21,13 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `prog-log (procedure|consume|procedure-stream|consume-stream)
+	return `prog-log (produce|consume|produce-stream|consume-stream)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` prog-log procedure --message '{
+	return os.Args[0] + ` prog-log produce --message '{
       "record": {
          "offset": 10189682183573662085,
          "value": "Vm9sdXB0YXRlIHF1YWVyYXQgcXVpIGRvbG9yIGxhdWRhbnRpdW0gbWFpb3Jlcy4="
@@ -42,20 +42,21 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 	var (
 		progLogFlags = flag.NewFlagSet("prog-log", flag.ContinueOnError)
 
-		progLogProcedureFlags       = flag.NewFlagSet("procedure", flag.ExitOnError)
-		progLogProcedureMessageFlag = progLogProcedureFlags.String("message", "", "")
+		progLogProduceFlags       = flag.NewFlagSet("produce", flag.ExitOnError)
+		progLogProduceMessageFlag = progLogProduceFlags.String("message", "", "")
 
 		progLogConsumeFlags       = flag.NewFlagSet("consume", flag.ExitOnError)
 		progLogConsumeMessageFlag = progLogConsumeFlags.String("message", "", "")
 
-		progLogProcedureStreamFlags = flag.NewFlagSet("procedure-stream", flag.ExitOnError)
+		progLogProduceStreamFlags = flag.NewFlagSet("produce-stream", flag.ExitOnError)
 
-		progLogConsumeStreamFlags = flag.NewFlagSet("consume-stream", flag.ExitOnError)
+		progLogConsumeStreamFlags       = flag.NewFlagSet("consume-stream", flag.ExitOnError)
+		progLogConsumeStreamMessageFlag = progLogConsumeStreamFlags.String("message", "", "")
 	)
 	progLogFlags.Usage = progLogUsage
-	progLogProcedureFlags.Usage = progLogProcedureUsage
+	progLogProduceFlags.Usage = progLogProduceUsage
 	progLogConsumeFlags.Usage = progLogConsumeUsage
-	progLogProcedureStreamFlags.Usage = progLogProcedureStreamUsage
+	progLogProduceStreamFlags.Usage = progLogProduceStreamUsage
 	progLogConsumeStreamFlags.Usage = progLogConsumeStreamUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
@@ -92,14 +93,14 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 		switch svcn {
 		case "prog-log":
 			switch epn {
-			case "procedure":
-				epf = progLogProcedureFlags
+			case "produce":
+				epf = progLogProduceFlags
 
 			case "consume":
 				epf = progLogConsumeFlags
 
-			case "procedure-stream":
-				epf = progLogProcedureStreamFlags
+			case "produce-stream":
+				epf = progLogProduceStreamFlags
 
 			case "consume-stream":
 				epf = progLogConsumeStreamFlags
@@ -129,18 +130,18 @@ func ParseEndpoint(cc *grpc.ClientConn, opts ...grpc.CallOption) (goa.Endpoint, 
 		case "prog-log":
 			c := proglogc.NewClient(cc, opts...)
 			switch epn {
-			case "procedure":
-				endpoint = c.Procedure()
-				data, err = proglogc.BuildProcedurePayload(*progLogProcedureMessageFlag)
+			case "produce":
+				endpoint = c.Produce()
+				data, err = proglogc.BuildProducePayload(*progLogProduceMessageFlag)
 			case "consume":
 				endpoint = c.Consume()
 				data, err = proglogc.BuildConsumePayload(*progLogConsumeMessageFlag)
-			case "procedure-stream":
-				endpoint = c.ProcedureStream()
+			case "produce-stream":
+				endpoint = c.ProduceStream()
 				data = nil
 			case "consume-stream":
 				endpoint = c.ConsumeStream()
-				data = nil
+				data, err = proglogc.BuildConsumeStreamPayload(*progLogConsumeStreamMessageFlag)
 			}
 		}
 	}
@@ -158,23 +159,23 @@ Usage:
     %[1]s [globalflags] prog-log COMMAND [flags]
 
 COMMAND:
-    procedure: Procedure implements Procedure.
+    produce: Produce implements Produce.
     consume: Consume implements Consume.
-    procedure-stream: ProcedureStream implements ProcedureStream.
+    produce-stream: ProduceStream implements ProduceStream.
     consume-stream: ConsumeStream implements ConsumeStream.
 
 Additional help:
     %[1]s prog-log COMMAND --help
 `, os.Args[0])
 }
-func progLogProcedureUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log procedure -message JSON
+func progLogProduceUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log produce -message JSON
 
-Procedure implements Procedure.
+Produce implements Produce.
     -message JSON: 
 
 Example:
-    %[1]s prog-log procedure --message '{
+    %[1]s prog-log produce --message '{
       "record": {
          "offset": 10189682183573662085,
          "value": "Vm9sdXB0YXRlIHF1YWVyYXQgcXVpIGRvbG9yIGxhdWRhbnRpdW0gbWFpb3Jlcy4="
@@ -196,22 +197,25 @@ Example:
 `, os.Args[0])
 }
 
-func progLogProcedureStreamUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log procedure-stream
+func progLogProduceStreamUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log produce-stream
 
-ProcedureStream implements ProcedureStream.
+ProduceStream implements ProduceStream.
 
 Example:
-    %[1]s prog-log procedure-stream
+    %[1]s prog-log produce-stream
 `, os.Args[0])
 }
 
 func progLogConsumeStreamUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log consume-stream
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] prog-log consume-stream -message JSON
 
 ConsumeStream implements ConsumeStream.
+    -message JSON: 
 
 Example:
-    %[1]s prog-log consume-stream
+    %[1]s prog-log consume-stream --message '{
+      "offset": 17539627402234799792
+   }'
 `, os.Args[0])
 }
