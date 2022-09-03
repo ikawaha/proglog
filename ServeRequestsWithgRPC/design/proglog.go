@@ -31,7 +31,7 @@ var ConsumeResponse = ResultType("ConsumeResponse", func() {
 })
 
 var _ = Service("ProgLog", func() {
-	Method("Procedure", func() {
+	Method("Produce", func() {
 		Payload(ProduceRequest)
 		Result(ProduceResponse)
 		GRPC(func() {
@@ -45,18 +45,20 @@ var _ = Service("ProgLog", func() {
 			Response(CodeOK)
 		})
 	})
-	Method("ProcedureStream", func() {
+	Method("ProduceStream", func() {
 		StreamingPayload(ProduceRequest)
-		Result(ProduceResponse)
+		StreamingResult(ProduceResponse)
 		GRPC(func() {
 			Response(CodeOK)
 		})
 	})
 	Method("ConsumeStream", func() {
-		StreamingPayload(ConsumeRequest)
+		Error("OffsetOutOfRange", UInt64)
+		Payload(ConsumeRequest)
 		StreamingResult(ConsumeResponse)
 		GRPC(func() {
 			Response(CodeOK)
+			Response("OffsetOutOfRange", CodeOutOfRange)
 		})
 	})
 })
